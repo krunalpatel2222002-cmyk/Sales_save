@@ -156,9 +156,31 @@
     color: #fff;
   }
 
-  .product-list { display: flex; flex-direction: column; gap: 8px; }
+  /* Search Input Box */
+  .search-wrap {
+    margin-bottom: 10px;
+  }
+  .search-wrap input {
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+  }
+
+  .product-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
   @media (max-width: 768px) {
-    .product-list { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
+    .product-list { 
+      flex-direction: row; 
+      overflow-x: auto; 
+      overflow-y: hidden;
+      max-height: none;
+      padding-bottom: 6px; 
+    }
   }
   .product-tab {
     text-align: left;
@@ -169,6 +191,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex-shrink: 0;
   }
   .product-tab.active { border-left-color: var(--accent); border-color: var(--rule-strong); }
   .product-tab .pname { font-weight: 600; font-size: 0.92rem; }
@@ -272,7 +295,7 @@
     <div class="box">
       <h2>Add New Product</h2>
       <label for="npName">Product Name</label>
-      <input id="npName" type="text" placeholder="e.g. Product Name">
+      <input id="npName" type="text" placeholder="e.g. Cotton Shirt">
       <label for="npCost">Cost Price (Fixed)</label>
       <input id="npCost" type="number" min="0" step="any" placeholder="0">
       <button class="btn-primary" id="addProductBtn">+ Create Product</button>
@@ -281,10 +304,16 @@
     <div class="box">
       <h2>Backup & Cloud Sync</h2>
       <button class="btn-sync" id="btnDownloadBackup">Download Backup (.JSON)</button>
+      <button class="btn-sync" id="btnImportJson" style="background:#5a3e1b;">+ Import JSON Products</button>
       <label for="sheetWebhook">Google Sheets Webhook URL</label>
       <input id="sheetWebhook" type="password" placeholder="Paste Webhook Link">
       <button class="btn-sync" id="btnSyncCloud">▲ Save Data to Google Sheets</button>
       <button class="btn-sync btn-pull" id="btnPullCloud">▼ Load Latest Data from Sheet</button>
+    </div>
+
+    <!-- Product Search Tab -->
+    <div class="search-wrap">
+      <input id="productSearch" type="text" placeholder="🔍 Search product name...">
     </div>
 
     <div class="product-list" id="productList"></div>
@@ -298,6 +327,7 @@
   var STORAGE_KEY = 'sales-ledger-cash-online-v1';
   var WEBHOOK_KEY = 'sales-ledger-webhook-url';
   var state = { products: [], activeId: null };
+  var searchQuery = '';
 
   function loadState(){
     try {
@@ -393,11 +423,23 @@
 
   function renderProductList(){
     var el = document.getElementById('productList');
+    
+    // Filter products based on search query
+    var filtered = state.products.filter(function(p){
+      return p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
     if (!state.products.length) {
-      el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.85rem;">No products added yet.</div>';
+      el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.85rem;padding:10px 0;">No products added yet.</div>';
       return;
     }
-    el.innerHTML = state.products.map(function(p){
+
+    if (!filtered.length) {
+      el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.85rem;padding:10px 0;">No matching product found.</div>';
+      return;
+    }
+
+    el.innerHTML = filtered.map(function(p){
       var t = computeProductTotals(p);
       var active = p.id === state.activeId ? ' active' : '';
       return '<button class="product-tab' + active + '" data-id="' + p.id + '">' +
@@ -505,7 +547,13 @@
     renderGrand();
   }
 
-  // Add Product
+  // Real-time Search Listener
+  document.getElementById('productSearch').addEventListener('input', function(e){
+    searchQuery = e.target.value.trim();
+    renderProductList();
+  });
+
+  // Add Single Product
   document.getElementById('addProductBtn').addEventListener('click', function(){
     var n = document.getElementById('npName').value.trim();
     var c = parseFloat(document.getElementById('npCost').value);
@@ -513,6 +561,35 @@
     addProduct(n, isNaN(c) || c < 0 ? 0 : c);
     document.getElementById('npName').value = '';
     document.getElementById('npCost').value = '';
+  });
+
+  // Bulk Import JSON Products
+  document.getElementById('btnImportJson').addEventListener('click', function() {
+    var input = prompt("Apna JSON array yahan paste karein:");
+    if (!input) return;
+    try {
+      var list = JSON.parse(input);
+      if (!Array.isArray(list)) {
+        alert("Format galat hai, array hona chahiye.");
+        return;
+      }
+      list.forEach(function(item, idx) {
+        state.products.push({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + idx,
+          name: item.product || item.name,
+          costPrice: Number(item.new_price || item.costPrice || 0),
+          sales: []
+        });
+      });
+      if (!state.activeId && state.products.length) {
+        state.activeId = state.products[0].id;
+      }
+      saveState();
+      render();
+      alert(list.length + " products successfully import ho gaye!");
+    } catch (err) {
+      alert("Invalid JSON: " + err.message);
+    }
   });
 
   // Download Backup
