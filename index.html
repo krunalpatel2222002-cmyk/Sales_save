@@ -144,7 +144,6 @@
     padding: 16px;
     margin-bottom: 16px;
   }
-  .box h2 { margin: 0 0 12px; font-size: 0.98rem; }
   label { display: block; font-size: 0.74rem; color: var(--ink-soft); margin: 10px 0 4px; }
   label:first-of-type { margin-top: 0; }
 
@@ -194,7 +193,7 @@
     padding-right: 4px;
   }
   @media (max-width: 768px) {
-    .product-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none; padding-bottom: 6px; }
+    .product-list { max-height: 280px; }
   }
   .product-tab {
     text-align: left;
@@ -286,6 +285,80 @@
   .row-del { background: none; border: none; color: var(--ink-soft); cursor: pointer; }
   .row-del:hover { color: var(--loss); }
   tfoot td { font-weight: 700; border-top: 2px solid var(--rule-strong); }
+
+  /* ===== Responsive layer (all screens) ===== */
+  html { -webkit-text-size-adjust: 100%; }
+  .app > *, .side > *, .sale-form > * { min-width: 0; }
+  .sale-form input, .sale-form select { min-width: 0; max-width: 100%; }
+  .box summary { font-size: 0.98rem; font-weight: 700; cursor: pointer; list-style: none; user-select: none; }
+  .box summary::-webkit-details-marker { display: none; }
+  .box summary::before { content: '\25B8  '; color: var(--ink-soft); }
+  .box[open] > summary::before { content: '\25BE  '; }
+  .box[open] > summary { margin-bottom: 12px; }
+  .cell-del button { padding: 4px 8px; }
+
+  @media (min-width: 1400px) {
+    .header-inner, .filter-bar, .app { max-width: 1320px; }
+    .app { grid-template-columns: 320px 1fr; gap: 24px; }
+  }
+  @media (max-width: 1024px) {
+    .app { grid-template-columns: 250px 1fr; gap: 16px; }
+  }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: minmax(0, 1fr); padding: 14px 14px 40px; }
+    .filter-bar { padding: 0 14px; }
+    .product-list { max-height: 280px; }
+    .sale-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sale-form .btn-add-sale { grid-column: 1 / -1; }
+  }
+  @media (max-width: 768px) {
+    .app { grid-template-columns: minmax(0, 1fr); padding: 14px 14px 40px; }
+    header { padding: 12px 14px 0; }
+    .header-inner { align-items: stretch; padding-bottom: 12px; }
+    .brand h1 { font-size: 1.35rem; }
+    .brand p { font-size: 0.82rem; }
+    .grand-strip { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 10px 12px; }
+    .grand-item { text-align: left; }
+    .grand-item .value { font-size: 1rem; overflow-wrap: anywhere; }
+    .filter-inner input[type="date"] { width: 100%; }
+    .filter-inner .fgroup { flex: 1 1 140px; }
+    .btn-chip { flex: 1 1 auto; }
+    .ledger { padding: 14px; min-height: 0; }
+    .ledger-head { flex-wrap: wrap; }
+    .ledger-head h2 { font-size: 1.15rem; overflow-wrap: anywhere; }
+    input, select { font-size: 16px; }
+    .product-tab { width: 100%; }
+  }
+  @media (max-width: 700px) {
+    .sale-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sale-form .btn-add-sale { grid-column: 1 / -1; }
+  }
+  /* Phone: table -> cards (no sideways scrolling) */
+  @media (max-width: 600px) {
+    .table-wrap { overflow-x: visible; }
+    table { min-width: 0; }
+    table, tbody, tfoot, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr { border: 1px solid var(--rule-strong); border-radius: 4px; padding: 6px 10px; margin-bottom: 10px; background: var(--paper); }
+    tfoot tr { border: 2px solid var(--rule-strong); border-radius: 4px; padding: 6px 10px; }
+    td { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed var(--rule); padding: 7px 0; text-align: right; }
+    td:last-child { border-bottom: none; }
+    td::before { content: attr(data-label); font-family: 'Zilla Slab', serif; font-size: 0.76rem; color: var(--ink-soft); text-align: left; }
+    td.cell-empty { display: none; }
+    tfoot td { border-top: none; }
+    .date-edit { border-color: var(--rule); background: var(--paper); }
+  }
+  @media (max-width: 400px) {
+    .sale-form { grid-template-columns: minmax(0, 1fr); }
+    .grand-item .label { font-size: 0.62rem; }
+    .box, .ledger, .filter-inner { padding: 12px; }
+    .head-actions { width: 100%; }
+    .head-actions button { flex: 1; }
+  }
+  @media (pointer: coarse) {
+    button, input, select { min-height: 42px; }
+    .row-del { min-width: 40px; }
+  }
 </style>
 </head>
 <body>
@@ -337,17 +410,17 @@
 
 <div class="app">
   <div class="side">
-    <div class="box">
-      <h2>Add New Product</h2>
+    <details class="box" id="boxAdd" open>
+      <summary>Add New Product</summary>
       <label for="npName">Product Name</label>
       <input id="npName" type="text" placeholder="e.g. Cotton Shirt">
       <label for="npCost">Cost Price (Fixed)</label>
       <input id="npCost" type="number" min="0" step="any" placeholder="0">
       <button class="btn-primary" id="addProductBtn">+ Create Product</button>
-    </div>
+    </details>
 
-    <div class="box">
-      <h2>Backup & Cloud Sync</h2>
+    <details class="box" id="boxBackup" open>
+      <summary>Backup & Cloud Sync</summary>
       <button class="btn-sync" id="btnDownloadBackup">Download Backup (.JSON)</button>
       <button class="btn-sync" id="btnExportCsv" style="background:#1f5a6b;">Export Sales (.CSV / Excel)</button>
       <button class="btn-sync" id="btnImportJson" style="background:#5a3e1b;">+ Import JSON Products</button>
@@ -355,7 +428,7 @@
       <input id="sheetWebhook" type="password" placeholder="Paste Webhook Link">
       <button class="btn-sync" id="btnSyncCloud">▲ Save Data to Google Sheets</button>
       <button class="btn-sync btn-pull" id="btnPullCloud">▼ Load Latest Data from Sheet</button>
-    </div>
+    </details>
 
     <div class="search-wrap">
       <input id="productSearch" type="text" placeholder="🔍 Search product name...">
@@ -374,6 +447,16 @@
   var state = { products: [], activeId: null };
   var searchQuery = '';
   var filter = { from: '', to: '' };
+
+  // true karoge to product select karne aur date filter buttons par bhi "Are you sure?" aayega
+  var CONFIRM_ON_NAV = false;
+  function sure(msg){ return confirm('Are you sure?\n\n' + msg); }
+  function scrollToLedger(){
+    if (window.innerWidth <= 900) {
+      var el = document.getElementById('ledgerPanel');
+      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   /* ---------- Date helpers (date only, no time) ---------- */
   function pad(n){ return n < 10 ? '0' + n : '' + n; }
@@ -555,9 +638,11 @@
 
     Array.prototype.forEach.call(el.querySelectorAll('.product-tab'), function(btn){
       btn.addEventListener('click', function(){
+        if (CONFIRM_ON_NAV && !sure('Ye product kholna hai: ' + btn.querySelector('.pname').textContent + ' ?')) return;
         state.activeId = btn.getAttribute('data-id');
         saveState();
         render();
+        scrollToLedger();
       });
     });
   }
@@ -583,22 +668,22 @@
         var badgeClass = s.mode === 'online' ? 'badge-online' : 'badge-cash';
         var modeName = s.mode === 'online' ? 'Online' : 'Cash';
         return '<tr>' +
-          '<td><input type="date" class="date-edit" value="' + saleDate(s) + '" title="Date badalne ke liye click karein" data-pid="' + p.id + '" data-sid="' + s.id + '"></td>' +
-          '<td><span class="mode-badge ' + badgeClass + '">' + modeName + '</span></td>' +
-          '<td class="num">' + fmtMoney(s.sellPrice) + '</td>' +
-          '<td class="num">' + s.qty + '</td>' +
-          '<td class="num">' + fmtMoney(amt) + '</td>' +
-          '<td class="num ' + (profit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(profit) + '</td>' +
-          '<td><button class="row-del" data-pid="' + p.id + '" data-sid="' + s.id + '" title="Delete sale">✕</button></td>' +
+          '<td data-label="Date"><input type="date" class="date-edit" value="' + saleDate(s) + '" title="Date badalne ke liye click karein" data-pid="' + p.id + '" data-sid="' + s.id + '"></td>' +
+          '<td data-label="Mode"><span class="mode-badge ' + badgeClass + '">' + modeName + '</span></td>' +
+          '<td class="num" data-label="Price">' + fmtMoney(s.sellPrice) + '</td>' +
+          '<td class="num" data-label="Qty">' + s.qty + '</td>' +
+          '<td class="num" data-label="Amount">' + fmtMoney(amt) + '</td>' +
+          '<td data-label="Profit" class="num ' + (profit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(profit) + '</td>' +
+          '<td class="cell-del" data-label="Delete"><button class="row-del" data-pid="' + p.id + '" data-sid="' + s.id + '" title="Delete sale">✕</button></td>' +
           '</tr>';
       }).join('');
 
       rowsHtml = '<div class="table-wrap"><table>' +
         '<thead><tr><th>Date</th><th>Mode</th><th>Price</th><th>Qty</th><th>Amount</th><th>Profit</th><th></th></tr></thead>' +
         '<tbody>' + body + '</tbody>' +
-        '<tfoot><tr><td>Total</td><td></td><td></td><td class="num">' + t.totalQty + '</td>' +
-        '<td class="num">' + fmtMoney(t.totalSell) + '</td>' +
-        '<td class="num ' + (t.totalProfit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(t.totalProfit) + '</td><td></td></tr></tfoot>' +
+        '<tfoot><tr><td class="cell-empty">Total</td><td class="cell-empty"></td><td class="cell-empty"></td><td class="num" data-label="Total Qty">' + t.totalQty + '</td>' +
+        '<td class="num" data-label="Total Amount">' + fmtMoney(t.totalSell) + '</td>' +
+        '<td data-label="Total Profit" class="num ' + (t.totalProfit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(t.totalProfit) + '</td><td class="cell-empty"></td></tr></tfoot>' +
         '</table></div>';
     }
 
@@ -631,6 +716,7 @@
       var date = document.getElementById('saleDate').value || todayStr();
       if (isNaN(sp) || sp < 0) { document.getElementById('saleSellPrice').focus(); return; }
       if (isNaN(qty) || qty < 1) qty = 1;
+      if (!sure('Sale add karni hai?\n\nProduct: ' + p.name + '\nDate: ' + fmtDate(date) + '\nPrice: ' + fmtMoney(sp) + ' x ' + qty + ' = ' + fmtMoney(sp * qty) + '\nMode: ' + (mode === 'online' ? 'Online' : 'Cash'))) return;
       lastSaleDate = date; // agli entry me wahi date rahe
       addSale(p.id, sp, qty, mode, date);
       var next = document.getElementById('saleSellPrice');
@@ -648,10 +734,11 @@
     });
 
     el.querySelector('.del-product').addEventListener('click', function(){
-      if (confirm('Delete "' + p.name + '" and all its sales records?')) deleteProduct(p.id);
+      if (sure('Product "' + p.name + '" aur uski saari sales records delete ho jayengi. Ye undo nahi hoga.')) deleteProduct(p.id);
     });
 
     el.querySelector('.edit-product').addEventListener('click', function(){
+      if (!sure('Product "' + p.name + '" ka naam / cost edit karna hai?')) return;
       var newName = prompt('Product name:', p.name);
       if (newName === null) return;
       newName = newName.trim();
@@ -668,12 +755,18 @@
 
     Array.prototype.forEach.call(el.querySelectorAll('.row-del'), function(btn){
       btn.addEventListener('click', function(){
-        deleteSale(btn.getAttribute('data-pid'), btn.getAttribute('data-sid'));
+        var sid = btn.getAttribute('data-sid');
+        var s = p.sales.find(function(x){ return x.id === sid; });
+        var info = s ? '\n\n' + fmtDate(saleDate(s)) + ' | ' + fmtMoney(s.sellPrice) + ' x ' + s.qty : '';
+        if (!sure('Ye sale delete karni hai?' + info)) return;
+        deleteSale(btn.getAttribute('data-pid'), sid);
       });
     });
 
     Array.prototype.forEach.call(el.querySelectorAll('.date-edit'), function(inp){
       inp.addEventListener('change', function(){
+        if (!inp.value) { render(); return; }
+        if (!sure('Sale ki date badalni hai?\n\n' + fmtDate(inp.defaultValue) + '  ->  ' + fmtDate(inp.value))) { render(); return; }
         updateSaleDate(inp.getAttribute('data-pid'), inp.getAttribute('data-sid'), inp.value);
       });
     });
@@ -711,16 +804,19 @@
     render();
   });
   document.getElementById('fltToday').addEventListener('click', function(){
+    if (CONFIRM_ON_NAV && !sure('Sirf aaj ki sales dikhani hain?')) return;
     filter.from = filter.to = todayStr();
     applyFilterInputs();
   });
   document.getElementById('fltMonth').addEventListener('click', function(){
+    if (CONFIRM_ON_NAV && !sure('Is mahine ki sales dikhani hain?')) return;
     var d = new Date();
     filter.from = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-01';
     filter.to = todayStr();
     applyFilterInputs();
   });
   document.getElementById('fltAll').addEventListener('click', function(){
+    if (CONFIRM_ON_NAV && !sure('Filter hata kar All Time dikhana hai?')) return;
     filter.from = filter.to = '';
     applyFilterInputs();
   });
@@ -735,7 +831,10 @@
     var n = document.getElementById('npName').value.trim();
     var c = parseFloat(document.getElementById('npCost').value);
     if (!n) { document.getElementById('npName').focus(); return; }
-    addProduct(n, isNaN(c) || c < 0 ? 0 : c);
+    var costFinal = isNaN(c) || c < 0 ? 0 : c;
+    if (!sure('Naya product create karna hai?\n\nNaam: ' + n + '\nCost: ' + fmtMoney(costFinal))) return;
+    addProduct(n, costFinal);
+    scrollToLedger();
     document.getElementById('npName').value = '';
     document.getElementById('npCost').value = '';
     document.getElementById('npName').focus();
@@ -749,6 +848,7 @@
 
   /* ---------- Import JSON ---------- */
   document.getElementById('btnImportJson').addEventListener('click', function() {
+    if (!sure('JSON se products import karne hain? (Ek hi file dobara import karoge to products duplicate ho jayenge)')) return;
     var input = prompt("Apna JSON array yahan paste karein:");
     if (!input) return;
     try {
@@ -792,10 +892,12 @@
   }
 
   document.getElementById('btnDownloadBackup').addEventListener('click', function(){
+    if (!sure('Poore data ka backup (.json) download karna hai?')) return;
     downloadFile('sales_backup_' + todayStr() + '.json', 'application/json', JSON.stringify(state, null, 2));
   });
 
   document.getElementById('btnExportCsv').addEventListener('click', function(){
+    if (!sure('Current date range ki sales CSV me export karni hain?')) return;
     function csvCell(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }
     var rows = [['Date', 'Product', 'Mode', 'Cost Price', 'Selling Price', 'Qty', 'Amount', 'Profit']];
     state.products.forEach(function(p){
@@ -816,6 +918,7 @@
   document.getElementById('btnSyncCloud').addEventListener('click', function(){
     var url = document.getElementById('sheetWebhook').value.trim();
     if (!url) { alert('Please enter your Google Apps Script Webhook URL first.'); return; }
+    if (!sure('Poora data Google Sheet me save karna hai? (Sheet ka purana data overwrite hoga)')) return;
     rememberWebhook(url);
     var btn = document.getElementById('btnSyncCloud');
     btn.textContent = 'Saving to Sheet...';
@@ -839,7 +942,7 @@
   document.getElementById('btnPullCloud').addEventListener('click', function(){
     var url = document.getElementById('sheetWebhook').value.trim();
     if (!url) { alert('Please enter your Google Apps Script Webhook URL first.'); return; }
-    if (!confirm('Sheet ka data is device ke current data ko replace kar dega. Continue?')) return;
+    if (!sure('Sheet ka data is device ke current data ko replace kar dega.')) return;
     rememberWebhook(url);
     var btn = document.getElementById('btnPullCloud');
     btn.textContent = 'Fetching Data...';
@@ -870,6 +973,11 @@
         btn.disabled = false;
       });
   });
+
+  if (window.innerWidth <= 900) {
+    document.getElementById('boxAdd').open = false;
+    document.getElementById('boxBackup').open = false;
+  }
 
   loadState();
   saveState();
