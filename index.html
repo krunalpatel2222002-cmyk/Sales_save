@@ -45,11 +45,12 @@
       --loss-bg: rgba(224,134,116,0.14);
       --cash: #64B5F6;
       --online: #BA68C8;
+      color-scheme: dark;
     }
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  html, body { margin: 0; }
   body {
     background: var(--paper);
     color: var(--ink);
@@ -92,16 +93,48 @@
   .grand-item.cash .value { color: var(--cash); }
   .grand-item.online .value { color: var(--online); }
 
+  /* Date filter bar */
+  .filter-bar {
+    max-width: 1100px;
+    margin: 14px auto 0;
+    padding: 0 20px;
+  }
+  .filter-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    padding: 10px 14px;
+  }
+  .filter-inner .fgroup { display: flex; flex-direction: column; }
+  .filter-inner label { margin: 0 0 3px; }
+  .filter-inner input[type="date"] { width: 150px; }
+  .btn-chip {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+  .btn-chip:hover { border-color: var(--accent); }
+  .filter-note { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); }
+
   .app {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 20px 20px 60px;
+    padding: 16px 20px 60px;
     display: grid;
     grid-template-columns: 290px 1fr;
     gap: 20px;
   }
   @media (max-width: 768px) {
     .app { grid-template-columns: 1fr; padding: 14px 14px 40px; }
+    .filter-bar { padding: 0 14px; }
+    .filter-note { margin-left: 0; width: 100%; }
   }
 
   .box {
@@ -114,7 +147,7 @@
   .box h2 { margin: 0 0 12px; font-size: 0.98rem; }
   label { display: block; font-size: 0.74rem; color: var(--ink-soft); margin: 10px 0 4px; }
   label:first-of-type { margin-top: 0; }
-  
+
   input, select {
     width: 100%;
     font: inherit;
@@ -126,11 +159,7 @@
     background: var(--paper);
     color: var(--ink);
   }
-  button {
-    font: inherit;
-    cursor: pointer;
-    border-radius: 3px;
-  }
+  button { font: inherit; cursor: pointer; border-radius: 3px; }
   .btn-primary {
     margin-top: 12px;
     width: 100%;
@@ -151,40 +180,26 @@
     font-weight: 500;
   }
   .btn-sync:hover { filter: brightness(1.2); }
-  .btn-pull {
-    background: #234b33;
-    color: #fff;
-  }
+  .btn-pull { background: #234b33; color: #fff; }
 
-  /* Search Input Box */
-  .search-wrap {
-    margin-bottom: 10px;
-  }
-  .search-wrap input {
-    background: var(--surface);
-    border: 1px solid var(--rule-strong);
-  }
+  .search-wrap { margin-bottom: 10px; }
+  .search-wrap input { background: var(--surface); }
 
-  .product-list { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 8px; 
+  .product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     max-height: 520px;
     overflow-y: auto;
     padding-right: 4px;
   }
   @media (max-width: 768px) {
-    .product-list { 
-      flex-direction: row; 
-      overflow-x: auto; 
-      overflow-y: hidden;
-      max-height: none;
-      padding-bottom: 6px; 
-    }
+    .product-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none; padding-bottom: 6px; }
   }
   .product-tab {
     text-align: left;
     background: var(--surface);
+    color: var(--ink);
     border: 1px solid var(--rule);
     border-left: 4px solid transparent;
     padding: 10px 12px;
@@ -208,27 +223,31 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 10px;
     border-bottom: 1px solid var(--rule);
     padding-bottom: 12px;
     margin-bottom: 14px;
   }
   .ledger-head h2 { margin: 0; font-size: 1.3rem; }
-  .del-product {
+  .head-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .del-product, .edit-product {
     background: none;
     border: 1px solid var(--rule-strong);
-    color: var(--loss);
     font-size: 0.76rem;
     padding: 4px 8px;
   }
+  .del-product { color: var(--loss); }
+  .edit-product { color: var(--ink); }
 
   .sale-form {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    grid-template-columns: 1.1fr 1fr 0.7fr 1.1fr auto;
     gap: 10px;
     align-items: end;
     margin-bottom: 18px;
   }
-  @media (max-width: 600px) {
+  .sale-form label { margin: 0 0 4px; }
+  @media (max-width: 700px) {
     .sale-form { grid-template-columns: 1fr 1fr; }
     .sale-form .btn-add-sale { grid-column: 1 / -1; }
   }
@@ -241,12 +260,20 @@
   }
 
   .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 580px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 640px; }
   th, td { padding: 8px 6px; border-bottom: 1px solid var(--rule); font-family: 'IBM Plex Mono', monospace; text-align: right; }
   th:first-child, td:first-child { text-align: left; font-family: inherit; }
   thead th { font-family: 'Zilla Slab', serif; font-size: 0.76rem; color: var(--ink-soft); }
   td.profit { color: var(--profit); }
   td.loss { color: var(--loss); }
+  .date-edit {
+    width: 138px;
+    padding: 3px 4px;
+    font-size: 0.8rem;
+    border: 1px solid transparent;
+    background: transparent;
+  }
+  .date-edit:hover, .date-edit:focus { border-color: var(--rule-strong); background: var(--paper); }
   .mode-badge {
     display: inline-block;
     padding: 2px 6px;
@@ -290,6 +317,24 @@
   </div>
 </header>
 
+<!-- Date range filter -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="fgroup">
+      <label for="fltFrom">From Date</label>
+      <input id="fltFrom" type="date">
+    </div>
+    <div class="fgroup">
+      <label for="fltTo">To Date</label>
+      <input id="fltTo" type="date">
+    </div>
+    <button class="btn-chip" id="fltToday">Today</button>
+    <button class="btn-chip" id="fltMonth">This Month</button>
+    <button class="btn-chip" id="fltAll">All Time</button>
+    <div class="filter-note" id="filterNote"></div>
+  </div>
+</div>
+
 <div class="app">
   <div class="side">
     <div class="box">
@@ -304,14 +349,14 @@
     <div class="box">
       <h2>Backup & Cloud Sync</h2>
       <button class="btn-sync" id="btnDownloadBackup">Download Backup (.JSON)</button>
+      <button class="btn-sync" id="btnExportCsv" style="background:#1f5a6b;">Export Sales (.CSV / Excel)</button>
       <button class="btn-sync" id="btnImportJson" style="background:#5a3e1b;">+ Import JSON Products</button>
-      <label for="sheetWebhook">Google Sheets Webhook URL</label>
+      <label for="sheetWebhook" style="margin-top:12px;">Google Sheets Webhook URL</label>
       <input id="sheetWebhook" type="password" placeholder="Paste Webhook Link">
       <button class="btn-sync" id="btnSyncCloud">▲ Save Data to Google Sheets</button>
       <button class="btn-sync btn-pull" id="btnPullCloud">▼ Load Latest Data from Sheet</button>
     </div>
 
-    <!-- Product Search Tab -->
     <div class="search-wrap">
       <input id="productSearch" type="text" placeholder="🔍 Search product name...">
     </div>
@@ -328,7 +373,40 @@
   var WEBHOOK_KEY = 'sales-ledger-webhook-url';
   var state = { products: [], activeId: null };
   var searchQuery = '';
+  var filter = { from: '', to: '' };
 
+  /* ---------- Date helpers (date only, no time) ---------- */
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function toISO(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function todayStr(){ return toISO(new Date()); }
+  var lastSaleDate = todayStr();
+
+  // Purani sales (jinme sirf ts hai) ke liye date nikalta hai
+  function saleDate(s){
+    if (s.date) return s.date;
+    return s.ts ? toISO(new Date(s.ts)) : todayStr();
+  }
+  function fmtDate(iso){
+    var parts = String(iso).split('-');
+    if (parts.length !== 3) return iso;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  function inRange(s){
+    var d = saleDate(s);
+    if (filter.from && d < filter.from) return false;
+    if (filter.to && d > filter.to) return false;
+    return true;
+  }
+  function filteredSales(p){
+    return p.sales.filter(inRange).sort(function(a, b){
+      var da = saleDate(a), db = saleDate(b);
+      if (da !== db) return da < db ? 1 : -1;
+      return (b.ts || 0) - (a.ts || 0);
+    });
+  }
+
+  /* ---------- Storage ---------- */
   function loadState(){
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -339,16 +417,24 @@
           state.activeId = parsed.activeId || (parsed.products[0] ? parsed.products[0].id : null);
         }
       }
-      var wh = localStorage.getItem(WEBHOOK_KEY);
-      if (wh) document.getElementById('sheetWebhook').value = wh;
     } catch(e) {
       console.error(e);
       state = { products: [], activeId: null };
     }
+    try {
+      var wh = localStorage.getItem(WEBHOOK_KEY);
+      if (wh) document.getElementById('sheetWebhook').value = wh;
+    } catch(e) {}
+    // Migration: har sale me date field bhar do
+    state.products.forEach(function(p){
+      if (!Array.isArray(p.sales)) p.sales = [];
+      p.sales.forEach(function(s){ if (!s.date) s.date = saleDate(s); });
+    });
   }
 
   function saveState(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e) { alert('Data save nahi ho paya (browser storage full/blocked). Backup download kar lein.'); }
   }
 
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -359,9 +445,10 @@
     return (neg ? '-₹' : '₹') + Math.abs(num).toLocaleString('en-IN', { maximumFractionDigits: 2 });
   }
 
+  /* ---------- Totals (date filter ke saath) ---------- */
   function computeProductTotals(p){
     var sell = 0, cost = 0, qty = 0, cash = 0, online = 0;
-    p.sales.forEach(function(s){
+    p.sales.filter(inRange).forEach(function(s){
       var amt = Number(s.sellPrice) * Number(s.qty);
       sell += amt;
       cost += Number(p.costPrice) * Number(s.qty);
@@ -384,6 +471,7 @@
     return { sell: sell, profit: profit, cash: cash, online: online };
   }
 
+  /* ---------- Actions ---------- */
   function addProduct(name, cost){
     var p = { id: uid(), name: name, costPrice: cost, sales: [] };
     state.products.push(p);
@@ -399,10 +487,10 @@
     render();
   }
 
-  function addSale(productId, sellPrice, qty, mode){
+  function addSale(productId, sellPrice, qty, mode, date){
     var p = state.products.find(function(p){ return p.id === productId; });
     if (!p) return;
-    p.sales.unshift({ id: uid(), sellPrice: sellPrice, qty: qty, mode: mode || 'cash', ts: Date.now() });
+    p.sales.unshift({ id: uid(), sellPrice: sellPrice, qty: qty, mode: mode || 'cash', date: date, ts: Date.now() });
     saveState();
     render();
   }
@@ -415,25 +503,42 @@
     render();
   }
 
+  function updateSaleDate(productId, saleId, newDate){
+    if (!newDate) return;
+    var p = state.products.find(function(p){ return p.id === productId; });
+    if (!p) return;
+    var s = p.sales.find(function(s){ return s.id === saleId; });
+    if (!s) return;
+    s.date = newDate;
+    saveState();
+    render();
+  }
+
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
     });
   }
 
+  /* ---------- Render ---------- */
+  function renderFilterNote(){
+    var el = document.getElementById('filterNote');
+    if (!filter.from && !filter.to) el.textContent = 'Showing: All Time';
+    else if (filter.from && filter.to && filter.from === filter.to) el.textContent = 'Showing: ' + fmtDate(filter.from);
+    else el.textContent = 'Showing: ' + (filter.from ? fmtDate(filter.from) : 'Start') + ' → ' + (filter.to ? fmtDate(filter.to) : 'Today');
+  }
+
   function renderProductList(){
     var el = document.getElementById('productList');
-    
-    // Filter products based on search query
+    var q = searchQuery.toLowerCase();
     var filtered = state.products.filter(function(p){
-      return p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return String(p.name).toLowerCase().includes(q);
     });
 
     if (!state.products.length) {
       el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.85rem;padding:10px 0;">No products added yet.</div>';
       return;
     }
-
     if (!filtered.length) {
       el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.85rem;padding:10px 0;">No matching product found.</div>';
       return;
@@ -465,33 +570,35 @@
       return;
     }
     var t = computeProductTotals(p);
+    var sales = filteredSales(p);
 
     var rowsHtml = '';
-    if (!p.sales.length) {
-      rowsHtml = '<div style="color:var(--ink-soft);font-size:0.88rem;padding:10px 0;">No sales recorded yet.</div>';
+    if (!sales.length) {
+      rowsHtml = '<div style="color:var(--ink-soft);font-size:0.88rem;padding:10px 0;">' +
+        (p.sales.length ? 'Is date range me koi sale nahi hai.' : 'No sales recorded yet.') + '</div>';
     } else {
-      var body = p.sales.map(function(s){
+      var body = sales.map(function(s){
         var amt = Number(s.sellPrice) * Number(s.qty);
         var profit = (Number(s.sellPrice) - Number(p.costPrice)) * Number(s.qty);
         var badgeClass = s.mode === 'online' ? 'badge-online' : 'badge-cash';
         var modeName = s.mode === 'online' ? 'Online' : 'Cash';
         return '<tr>' +
-          '<td>' + new Date(s.ts).toLocaleDateString('en-US', { day:'2-digit', month:'short' }) + '</td>' +
+          '<td><input type="date" class="date-edit" value="' + saleDate(s) + '" title="Date badalne ke liye click karein" data-pid="' + p.id + '" data-sid="' + s.id + '"></td>' +
           '<td><span class="mode-badge ' + badgeClass + '">' + modeName + '</span></td>' +
           '<td class="num">' + fmtMoney(s.sellPrice) + '</td>' +
           '<td class="num">' + s.qty + '</td>' +
           '<td class="num">' + fmtMoney(amt) + '</td>' +
           '<td class="num ' + (profit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(profit) + '</td>' +
-          '<td><button class="row-del" data-pid="' + p.id + '" data-sid="' + s.id + '">✕</button></td>' +
+          '<td><button class="row-del" data-pid="' + p.id + '" data-sid="' + s.id + '" title="Delete sale">✕</button></td>' +
           '</tr>';
       }).join('');
 
       rowsHtml = '<div class="table-wrap"><table>' +
-        '<thead><tr><th>Date</th><th style="text-align:right">Mode</th><th>Price</th><th>Qty</th><th>Amount</th><th>Profit</th><th></th></tr></thead>' +
+        '<thead><tr><th>Date</th><th>Mode</th><th>Price</th><th>Qty</th><th>Amount</th><th>Profit</th><th></th></tr></thead>' +
         '<tbody>' + body + '</tbody>' +
         '<tfoot><tr><td>Total</td><td></td><td></td><td class="num">' + t.totalQty + '</td>' +
         '<td class="num">' + fmtMoney(t.totalSell) + '</td>' +
-        '<td class="num profit">' + fmtMoney(t.totalProfit) + '</td><td></td></tr></tfoot>' +
+        '<td class="num ' + (t.totalProfit >= 0 ? 'profit' : 'loss') + '">' + fmtMoney(t.totalProfit) + '</td><td></td></tr></tfoot>' +
         '</table></div>';
     }
 
@@ -503,32 +610,71 @@
             'Cost: ' + fmtMoney(p.costPrice) + ' | Cash: ' + fmtMoney(t.cash) + ' | Online: ' + fmtMoney(t.online) +
           '</div>' +
         '</div>' +
-        '<button class="del-product" data-id="' + p.id + '">Delete Product</button>' +
+        '<div class="head-actions">' +
+          '<button class="edit-product" data-id="' + p.id + '">Edit</button>' +
+          '<button class="del-product" data-id="' + p.id + '">Delete</button>' +
+        '</div>' +
       '</div>' +
       '<div class="sale-form">' +
-        '<div><label>Selling Price</label><input id="saleSellPrice" type="number" min="0" step="any" placeholder="0"></div>' +
-        '<div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div>' +
-        '<div><label>Payment Mode</label><select id="saleMode"><option value="cash">Cash</option><option value="online">Online (UPI/Card)</option></select></div>' +
+        '<div><label for="saleDate">Sale Date</label><input id="saleDate" type="date" value="' + lastSaleDate + '"></div>' +
+        '<div><label for="saleSellPrice">Selling Price</label><input id="saleSellPrice" type="number" min="0" step="any" placeholder="0"></div>' +
+        '<div><label for="saleQty">Qty</label><input id="saleQty" type="number" min="1" step="1" value="1"></div>' +
+        '<div><label for="saleMode">Payment Mode</label><select id="saleMode"><option value="cash">Cash</option><option value="online">Online (UPI/Card)</option></select></div>' +
         '<button class="btn-add-sale" id="addSaleBtn">Add Sale</button>' +
       '</div>' +
       rowsHtml;
 
-    document.getElementById('addSaleBtn').addEventListener('click', function(){
+    function submitSale(){
       var sp = parseFloat(document.getElementById('saleSellPrice').value);
       var qty = parseInt(document.getElementById('saleQty').value, 10);
       var mode = document.getElementById('saleMode').value;
+      var date = document.getElementById('saleDate').value || todayStr();
       if (isNaN(sp) || sp < 0) { document.getElementById('saleSellPrice').focus(); return; }
       if (isNaN(qty) || qty < 1) qty = 1;
-      addSale(p.id, sp, qty, mode);
+      lastSaleDate = date; // agli entry me wahi date rahe
+      addSale(p.id, sp, qty, mode, date);
+      var next = document.getElementById('saleSellPrice');
+      if (next) next.focus();
+    }
+
+    document.getElementById('addSaleBtn').addEventListener('click', submitSale);
+    ['saleSellPrice', 'saleQty'].forEach(function(id){
+      document.getElementById(id).addEventListener('keydown', function(e){
+        if (e.key === 'Enter') submitSale();
+      });
+    });
+    document.getElementById('saleDate').addEventListener('change', function(e){
+      if (e.target.value) lastSaleDate = e.target.value;
     });
 
     el.querySelector('.del-product').addEventListener('click', function(){
       if (confirm('Delete "' + p.name + '" and all its sales records?')) deleteProduct(p.id);
     });
 
+    el.querySelector('.edit-product').addEventListener('click', function(){
+      var newName = prompt('Product name:', p.name);
+      if (newName === null) return;
+      newName = newName.trim();
+      if (!newName) return;
+      var newCost = prompt('Cost price (purani sabhi sales ka profit bhi is hisab se badlega):', p.costPrice);
+      if (newCost === null) return;
+      var c = parseFloat(newCost);
+      if (isNaN(c) || c < 0) { alert('Cost price sahi number hona chahiye.'); return; }
+      p.name = newName;
+      p.costPrice = c;
+      saveState();
+      render();
+    });
+
     Array.prototype.forEach.call(el.querySelectorAll('.row-del'), function(btn){
       btn.addEventListener('click', function(){
         deleteSale(btn.getAttribute('data-pid'), btn.getAttribute('data-sid'));
+      });
+    });
+
+    Array.prototype.forEach.call(el.querySelectorAll('.date-edit'), function(inp){
+      inp.addEventListener('change', function(){
+        updateSaleDate(inp.getAttribute('data-pid'), inp.getAttribute('data-sid'), inp.value);
       });
     });
   }
@@ -542,28 +688,66 @@
   }
 
   function render(){
+    renderFilterNote();
     renderProductList();
     renderLedger();
     renderGrand();
   }
 
-  // Real-time Search Listener
+  /* ---------- Filter controls ---------- */
+  function applyFilterInputs(){
+    document.getElementById('fltFrom').value = filter.from;
+    document.getElementById('fltTo').value = filter.to;
+    render();
+  }
+  document.getElementById('fltFrom').addEventListener('change', function(e){
+    filter.from = e.target.value;
+    if (filter.from && filter.to && filter.from > filter.to) { filter.to = filter.from; document.getElementById('fltTo').value = filter.to; }
+    render();
+  });
+  document.getElementById('fltTo').addEventListener('change', function(e){
+    filter.to = e.target.value;
+    if (filter.from && filter.to && filter.to < filter.from) { filter.from = filter.to; document.getElementById('fltFrom').value = filter.from; }
+    render();
+  });
+  document.getElementById('fltToday').addEventListener('click', function(){
+    filter.from = filter.to = todayStr();
+    applyFilterInputs();
+  });
+  document.getElementById('fltMonth').addEventListener('click', function(){
+    var d = new Date();
+    filter.from = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-01';
+    filter.to = todayStr();
+    applyFilterInputs();
+  });
+  document.getElementById('fltAll').addEventListener('click', function(){
+    filter.from = filter.to = '';
+    applyFilterInputs();
+  });
+
+  /* ---------- Search / Add product ---------- */
   document.getElementById('productSearch').addEventListener('input', function(e){
     searchQuery = e.target.value.trim();
     renderProductList();
   });
 
-  // Add Single Product
-  document.getElementById('addProductBtn').addEventListener('click', function(){
+  function submitProduct(){
     var n = document.getElementById('npName').value.trim();
     var c = parseFloat(document.getElementById('npCost').value);
-    if (!n) return;
+    if (!n) { document.getElementById('npName').focus(); return; }
     addProduct(n, isNaN(c) || c < 0 ? 0 : c);
     document.getElementById('npName').value = '';
     document.getElementById('npCost').value = '';
+    document.getElementById('npName').focus();
+  }
+  document.getElementById('addProductBtn').addEventListener('click', submitProduct);
+  ['npName', 'npCost'].forEach(function(id){
+    document.getElementById(id).addEventListener('keydown', function(e){
+      if (e.key === 'Enter') submitProduct();
+    });
   });
 
-  // Bulk Import JSON Products
+  /* ---------- Import JSON ---------- */
   document.getElementById('btnImportJson').addEventListener('click', function() {
     var input = prompt("Apna JSON array yahan paste karein:");
     if (!input) return;
@@ -573,42 +757,66 @@
         alert("Format galat hai, array hona chahiye.");
         return;
       }
-      list.forEach(function(item, idx) {
+      var count = 0;
+      list.forEach(function(item) {
+        var name = item.product || item.name;
+        if (!name) return;
         state.products.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + idx,
-          name: item.product || item.name,
+          id: uid(),
+          name: String(name),
           costPrice: Number(item.new_price || item.costPrice || 0),
           sales: []
         });
+        count++;
       });
-      if (!state.activeId && state.products.length) {
-        state.activeId = state.products[0].id;
-      }
+      if (!state.activeId && state.products.length) state.activeId = state.products[0].id;
       saveState();
       render();
-      alert(list.length + " products successfully import ho gaye!");
+      alert(count + " products successfully import ho gaye!");
     } catch (err) {
       alert("Invalid JSON: " + err.message);
     }
   });
 
-  // Download Backup
-  document.getElementById('btnDownloadBackup').addEventListener('click', function(){
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+  /* ---------- Backup / CSV ---------- */
+  function downloadFile(filename, mime, content){
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
     var dl = document.createElement('a');
-    dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", "sales_backup_" + new Date().toISOString().slice(0,10) + ".json");
+    dl.href = url;
+    dl.download = filename;
+    document.body.appendChild(dl);
     dl.click();
+    document.body.removeChild(dl);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  document.getElementById('btnDownloadBackup').addEventListener('click', function(){
+    downloadFile('sales_backup_' + todayStr() + '.json', 'application/json', JSON.stringify(state, null, 2));
   });
 
-  // 1. SAVE to Google Sheets
+  document.getElementById('btnExportCsv').addEventListener('click', function(){
+    function csvCell(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }
+    var rows = [['Date', 'Product', 'Mode', 'Cost Price', 'Selling Price', 'Qty', 'Amount', 'Profit']];
+    state.products.forEach(function(p){
+      filteredSales(p).forEach(function(s){
+        var amt = Number(s.sellPrice) * Number(s.qty);
+        var profit = (Number(s.sellPrice) - Number(p.costPrice)) * Number(s.qty);
+        rows.push([saleDate(s), p.name, s.mode === 'online' ? 'Online' : 'Cash', p.costPrice, s.sellPrice, s.qty, amt, profit]);
+      });
+    });
+    if (rows.length === 1) { alert('Export karne ke liye is date range me koi sale nahi hai.'); return; }
+    var csv = '\uFEFF' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\n');
+    downloadFile('sales_' + (filter.from || 'all') + '_to_' + (filter.to || todayStr()) + '.csv', 'text/csv;charset=utf-8', csv);
+  });
+
+  /* ---------- Google Sheets sync ---------- */
+  function rememberWebhook(url){ try { localStorage.setItem(WEBHOOK_KEY, url); } catch(e) {} }
+
   document.getElementById('btnSyncCloud').addEventListener('click', function(){
     var url = document.getElementById('sheetWebhook').value.trim();
-    if (!url) {
-      alert('Please enter your Google Apps Script Webhook URL first.');
-      return;
-    }
-    localStorage.setItem(WEBHOOK_KEY, url);
+    if (!url) { alert('Please enter your Google Apps Script Webhook URL first.'); return; }
+    rememberWebhook(url);
     var btn = document.getElementById('btnSyncCloud');
     btn.textContent = 'Saving to Sheet...';
     btn.disabled = true;
@@ -620,23 +828,19 @@
       body: JSON.stringify({ state: state, updatedAt: new Date().toISOString() })
     }).then(function(){
       alert('Success: Data saved to Google Sheet!');
-      btn.textContent = '▲ Save Data to Google Sheets';
-      btn.disabled = false;
     }).catch(function(err){
       alert('Error saving: ' + err.message);
+    }).then(function(){
       btn.textContent = '▲ Save Data to Google Sheets';
       btn.disabled = false;
     });
   });
 
-  // 2. LOAD / PULL from Google Sheets (Phone / PC Sync)
   document.getElementById('btnPullCloud').addEventListener('click', function(){
     var url = document.getElementById('sheetWebhook').value.trim();
-    if (!url) {
-      alert('Please enter your Google Apps Script Webhook URL first.');
-      return;
-    }
-    localStorage.setItem(WEBHOOK_KEY, url);
+    if (!url) { alert('Please enter your Google Apps Script Webhook URL first.'); return; }
+    if (!confirm('Sheet ka data is device ke current data ko replace kar dega. Continue?')) return;
+    rememberWebhook(url);
     var btn = document.getElementById('btnPullCloud');
     btn.textContent = 'Fetching Data...';
     btn.disabled = true;
@@ -646,6 +850,10 @@
       .then(function(data) {
         if (data && Array.isArray(data.products)) {
           state.products = data.products;
+          state.products.forEach(function(p){
+            if (!Array.isArray(p.sales)) p.sales = [];
+            p.sales.forEach(function(s){ if (!s.date) s.date = saleDate(s); });
+          });
           state.activeId = data.products.length ? data.products[0].id : null;
           saveState();
           render();
@@ -653,17 +861,18 @@
         } else {
           alert('No products found or invalid data format.');
         }
-        btn.textContent = '▼ Load Latest Data from Sheet';
-        btn.disabled = false;
       })
       .catch(function(err) {
         alert('Fetch Error: Check URL and make sure Web App is deployed as "Anyone".\n' + err.message);
+      })
+      .then(function(){
         btn.textContent = '▼ Load Latest Data from Sheet';
         btn.disabled = false;
       });
   });
 
   loadState();
+  saveState();
   render();
 })();
 </script>
