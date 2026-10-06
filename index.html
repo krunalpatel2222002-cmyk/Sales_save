@@ -210,7 +210,10 @@
   .recent-bill .rb-meta { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--ink-soft); }
   .hist-sum { font-size: 0.74rem; color: var(--ink-soft); margin: 8px 0 8px; font-family: 'IBM Plex Mono', monospace; }
   .hist-list { max-height: 420px; overflow-y: auto; padding-right: 2px; }
-  .rb-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .rb-btns { display: grid; grid-template-columns: repeat(2, auto); gap: 4px; flex-shrink: 0; }
+  .rb-btns button.rb-edit { background: var(--accent); color: var(--accent-ink); }
+  .edit-banner { display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--loss-bg); border: 1px solid var(--accent); border-radius: 3px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.8rem; }
+  .edit-banner button { background: var(--ink); color: var(--paper); border: none; padding: 5px 10px; font-size: 0.76rem; flex-shrink: 0; }
   .rb-btns button.rb-dl { background: var(--ink); color: var(--paper); }
   .rb-btns button.rb-del { background: none; color: var(--loss); border: 1px solid var(--rule-strong); }
   .recent-bill button { background: #1f9d4d; color: #fff; border: none; padding: 5px 9px; font-size: 0.74rem; flex-shrink: 0; }
@@ -462,7 +465,8 @@
 
     <details class="box" id="boxBill" open>
       <summary>Create Bill (WhatsApp)</summary>
-      <p class="bill-next">Next Invoice No: <b id="billNextNo">201</b></p>
+      <div class="edit-banner" id="editBanner"><span>✏️ Invoice <b id="editNo"></b> edit ho raha hai</span><button id="btnCancelEdit">Cancel</button></div>
+      <p class="bill-next" id="billNextP">Next Invoice No: <b id="billNextNo">201</b></p>
       <label for="billName">Customer Name</label>
       <input id="billName" type="text" placeholder="e.g. Rahul Patel">
       <label for="billPhone">Customer Phone (WhatsApp)</label>
@@ -1031,22 +1035,63 @@
     return { name: name, phone: phone, date: date, total: total, items: items };
   }
 
+  var editingId = null;
+
+  function setEditMode(b){
+    editingId = b ? b.id : null;
+    var banner = document.getElementById('editBanner');
+    banner.style.display = b ? 'flex' : 'none';
+    document.getElementById('billNextP').style.display = b ? 'none' : 'block';
+    if (b) document.getElementById('editNo').textContent = '#' + b.no;
+    document.getElementById('btnBillShare').textContent = b ? '📲 Update Bill & Send on WhatsApp' : '📲 Create Bill & Send on WhatsApp';
+    document.getElementById('btnBillDownload').textContent = b ? '⬇ Update & PDF Download' : '⬇ Sirf PDF Download';
+  }
+
+  function startEditBill(b){
+    setEditMode(b);
+    document.getElementById('billName').value = b.name || '';
+    document.getElementById('billPhone').value = b.phone || '';
+    document.getElementById('billDate').value = b.date || todayStr();
+    billItems = (b.items || []).map(function(it){
+      var p = state.products.find(function(x){ return x.name === it.name; });
+      return { pid: p ? p.id : null, name: it.name, qty: it.qty, rate: it.rate };
+    });
+    renderBillItems();
+    var box = document.getElementById('boxBill');
+    box.open = true;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!billItems.length) alert('Ye purana bill hai jisme items save nahi the. Product add karke dobara items bharo.');
+  }
+
+  function resetBillForm(){
+    document.getElementById('billName').value = '';
+    document.getElementById('billPhone').value = '';
+    document.getElementById('billDate').value = todayStr();
+    billItems = [];
+    setEditMode(null);
+    renderBillItems();
+  }
+
   function createBill(action){
     var f = readBillForm();
     if (!f) return;
-    var b = { id: uid(), no: state.nextInvoice, name: f.name, phone: f.phone, date: f.date, total: f.total, items: f.items };
-    state.bills.unshift(b);
-    state.nextInvoice = b.no + 1;
+    var b;
+    if (editingId) {
+      b = state.bills.find(function(x){ return x.id === editingId; });
+      if (!b) { alert('Ye bill history se delete ho chuka hai. Edit cancel ho gaya.'); resetBillForm(); return; }
+      b.name = f.name; b.phone = f.phone; b.date = f.date; b.total = f.total; b.items = f.items;
+    } else {
+      b = { id: uid(), no: state.nextInvoice, name: f.name, phone: f.phone, date: f.date, total: f.total, items: f.items };
+      state.bills.unshift(b);
+      state.nextInvoice = b.no + 1;
+    }
     saveState();
     if (action === 'share') sharePdf(b);
     else {
       if (!pdfLibReady()) return;
       downloadBlob(buildInvoicePdf(b).output('blob'), pdfFileName(b));
     }
-    document.getElementById('billName').value = '';
-    document.getElementById('billPhone').value = '';
-    billItems = [];
-    renderBillItems();
+    resetBillForm();
     renderBill();
   }
 
@@ -1074,6 +1119,7 @@
         '<div class="rb-meta">' + escapeHtml(b.phone) + '</div></div>' +
         '<div class="rb-btns"><button data-bid="' + b.id + '" data-act="share" title="WhatsApp pe bhejo">📲</button>' +
         '<button class="rb-dl" data-bid="' + b.id + '" data-act="dl" title="PDF download">⬇</button>' +
+        '<button class="rb-edit" data-bid="' + b.id + '" data-act="edit" title="Bill edit karo">✏️</button>' +
         '<button class="rb-del" data-bid="' + b.id + '" data-act="del" title="Bill delete">🗑</button></div></div>';
     }).join('') + (list.length > shown.length ? '<div class="hist-sum">Pehle 60 dikh rahe hain, search se filter karo.</div>' : '');
     Array.prototype.forEach.call(el.querySelectorAll('button'), function(btn){
@@ -1083,9 +1129,11 @@
         var act = btn.getAttribute('data-act');
         if (act === 'share') sharePdf(b);
         else if (act === 'dl') { if (pdfLibReady()) downloadBlob(buildInvoicePdf(b).output('blob'), pdfFileName(b)); }
+        else if (act === 'edit') startEditBill(b);
         else if (act === 'del') {
           if (!sure('Invoice #' + b.no + ' (' + b.name + ', ' + fmtMoney(b.total) + ') history se delete karna hai? Invoice number dobara use nahi hoga.')) return;
           state.bills = state.bills.filter(function(x){ return x.id !== b.id; });
+          if (editingId === b.id) resetBillForm();
           saveState();
           renderBill();
         }
@@ -1095,6 +1143,7 @@
 
   document.getElementById('billDate').value = todayStr();
   document.getElementById('histSearch').addEventListener('input', renderBill);
+  document.getElementById('btnCancelEdit').addEventListener('click', resetBillForm);
   document.getElementById('billProdSearch').addEventListener('input', showProdResults);
   document.getElementById('billProdSearch').addEventListener('focus', showProdResults);
   document.addEventListener('click', function(e){
