@@ -211,6 +211,8 @@
   .hist-sum { font-size: 0.74rem; color: var(--ink-soft); margin: 8px 0 8px; font-family: 'IBM Plex Mono', monospace; }
   .hist-list { max-height: 420px; overflow-y: auto; padding-right: 2px; }
   .rb-btns { display: grid; grid-template-columns: repeat(2, auto); gap: 4px; flex-shrink: 0; }
+  .rb-pend { font-size: 0.7rem; color: var(--loss); font-weight: 600; overflow-wrap: anywhere; margin-top: 2px; }
+  .rb-btns button.rb-pendbtn { background: var(--cash); color: #fff; }
   .rb-btns button.rb-edit { background: var(--accent); color: var(--accent-ink); }
   .edit-banner { display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--loss-bg); border: 1px solid var(--accent); border-radius: 3px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.8rem; }
   .edit-banner button { background: var(--ink); color: var(--paper); border: none; padding: 5px 10px; font-size: 0.76rem; flex-shrink: 0; }
@@ -224,7 +226,7 @@
   .prod-results button:hover { background: var(--paper); }
   .bill-item { border: 1px solid var(--rule); border-radius: 3px; padding: 8px; margin-top: 8px; background: var(--paper); }
   .bi-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 600; font-size: 0.86rem; }
-  .bi-grid { display: grid; grid-template-columns: 0.8fr 1.3fr 1.2fr; gap: 6px; align-items: end; margin-top: 6px; }
+  .bi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: end; margin-top: 6px; }
   .bi-grid > div { min-width: 0; }
   .bi-grid label { margin: 0 0 2px; font-size: 0.66rem; }
   .bi-grid input { padding: 6px 7px; }
@@ -465,7 +467,7 @@
 
     <details class="box" id="boxBill" open>
       <summary>Create Bill (WhatsApp)</summary>
-      <div class="edit-banner" id="editBanner"><span>✏️ Invoice <b id="editNo"></b> edit ho raha hai</span><button id="btnCancelEdit">Cancel</button></div>
+      <div class="edit-banner" id="editBanner"><span id="editMsg"></span><button id="btnCancelEdit">Cancel</button></div>
       <p class="bill-next" id="billNextP">Next Invoice No: <b id="billNextNo">201</b></p>
       <label for="billName">Customer Name</label>
       <input id="billName" type="text" placeholder="e.g. Rahul Patel">
@@ -487,7 +489,7 @@
 
     <details class="box" id="boxHist" open>
       <summary>Invoice History</summary>
-      <input id="histSearch" type="text" placeholder="🔍 Naam / phone / invoice no...">
+      <input id="histSearch" type="text" placeholder="🔍 Naam / phone / invoice no / 'pending'">
       <div class="hist-sum" id="histSum"></div>
       <div class="hist-list" id="histList"></div>
     </details>
@@ -803,8 +805,10 @@
     doc.text('Name :  ' + b.name, L + 3, 84);
     doc.text('Phone :  ' + b.phone, L + 3, 91.5);
 
-    // Items table
-    var items = Array.isArray(b.items) ? b.items : [];
+    // Items table (sirf jo abhi bheje ja rahe hain)
+    var allItems = Array.isArray(b.items) ? b.items : [];
+    var items = allItems.filter(function(it){ return (Number(it.qty) || 0) > 0; });
+    var pendItems = allItems.filter(function(it){ return (Number(it.pend) || 0) > 0; });
     var y = 104;
     if (items.length) {
       var cx = [L, 24, 118, 138, 166, R];
@@ -837,8 +841,36 @@
       });
     }
 
+    // Pending items (amount nahi, sirf list)
+    if (pendItems.length) {
+      y += 6;
+      var pq = R - 40;
+      var drawPendHeader = function(){
+        doc.setFillColor(255, 232, 200);
+        doc.rect(L, y, R - L, 9, 'FD');
+        doc.line(pq, y, pq, y + 9);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+        doc.text('PENDING ITEMS (to be delivered later)', L + 2, y + 6);
+        doc.text('PENDING QTY', R - 3, y + 6, { align: 'right' });
+        y += 9;
+      };
+      if (y + 17 > 275) { doc.addPage(); y = 15; }
+      drawPendHeader();
+      pendItems.forEach(function(it, i){
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+        var lines = doc.splitTextToSize((i + 1) + '.  ' + String(it.name), pq - L - 4);
+        var h = Math.max(8, lines.length * 4.6 + 3.4);
+        if (y + h > 275) { doc.addPage(); y = 15; drawPendHeader(); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); }
+        doc.rect(L, y, R - L, h);
+        doc.line(pq, y, pq, y + h);
+        doc.text(lines, L + 2, y + 5.4);
+        doc.text(String(it.pend), R - 3, y + 5.4, { align: 'right' });
+        y += h;
+      });
+    }
+
     // Summary table
-    var ty = y + (items.length ? 8 : 2), rh = 10;
+    var ty = y + ((items.length || pendItems.length) ? 8 : 2), rh = 10;
     if (ty > 176) { doc.addPage(); ty = 15; }
     doc.setDrawColor(40, 40, 60); doc.setTextColor(25, 25, 45); doc.setLineWidth(0.4);
     doc.setFillColor(205, 208, 224);
@@ -918,7 +950,8 @@
     var blob = doc.output('blob');
     var fname = pdfFileName(b);
     var file = new File([blob], fname, { type: 'application/pdf' });
-    var msg = 'Namaste ' + b.name + ', US Nutrition se aapka bill (Invoice No. ' + b.no + ') - Total Rs. ' + money2(b.total) + '. Dhanyawad!';
+    var msg = 'Namaste ' + b.name + ', US Nutrition se aapka bill (Invoice No. ' + b.no + ') - Total Rs. ' + money2(b.total) + '.' +
+      ((b.items || []).some(function(it){ return (Number(it.pend) || 0) > 0; }) ? ' Kuch items pending hain, stock aate hi bhej denge.' : '') + ' Dhanyawad!';
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: 'Invoice ' + b.no, text: msg }).catch(function(err){
@@ -976,13 +1009,17 @@
       return '<div class="bill-item"><div class="bi-top"><span>' + escapeHtml(it.name) + '</span>' +
         '<button class="row-del" data-i="' + i + '" title="Hatao">✕</button></div>' +
         '<div class="bi-grid">' +
-          '<div><label>Qty</label><input type="number" class="bi-qty" min="1" step="1" inputmode="numeric" data-i="' + i + '" value="' + it.qty + '"></div>' +
+          '<div><label>Qty (abhi bhejna hai)</label><input type="number" class="bi-qty" min="0" step="1" inputmode="numeric" data-i="' + i + '" value="' + it.qty + '"></div>' +
+          '<div><label>Pending (baad me)</label><input type="number" class="bi-pend" min="0" step="1" inputmode="numeric" data-i="' + i + '" value="' + (it.pend || 0) + '"></div>' +
           '<div><label>Rate (edit kar sakte ho)</label><input type="number" class="bi-rate" min="0" step="any" inputmode="decimal" data-i="' + i + '" value="' + (it.rate || '') + '" placeholder="0"></div>' +
-          '<div><label>Amount</label><div class="bi-amt" id="biAmt' + i + '"></div></div>' +
+          '<div><label>Amount (sirf bheje ka)</label><div class="bi-amt" id="biAmt' + i + '"></div></div>' +
         '</div></div>';
     }).join('');
     Array.prototype.forEach.call(el.querySelectorAll('.bi-qty'), function(inp){
       inp.addEventListener('input', function(){ billItems[+inp.getAttribute('data-i')].qty = parseInt(inp.value, 10) || 0; updateBillTotals(); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.bi-pend'), function(inp){
+      inp.addEventListener('input', function(){ billItems[+inp.getAttribute('data-i')].pend = parseInt(inp.value, 10) || 0; });
     });
     Array.prototype.forEach.call(el.querySelectorAll('.bi-rate'), function(inp){
       inp.addEventListener('input', function(){ billItems[+inp.getAttribute('data-i')].rate = parseFloat(inp.value) || 0; updateBillTotals(); });
@@ -998,7 +1035,7 @@
     if (!p) return;
     var ex = billItems.find(function(it){ return it.pid === pid; });
     if (ex) ex.qty = (Number(ex.qty) || 0) + 1;
-    else billItems.push({ pid: pid, name: p.name, qty: 1, rate: lastSellPrice(p) });
+    else billItems.push({ pid: pid, name: p.name, qty: 1, pend: 0, rate: lastSellPrice(p) });
     document.getElementById('billProdSearch').value = '';
     hideProdResults();
     renderBillItems();
@@ -1026,41 +1063,73 @@
     var digits = phone.replace(/\D/g, '');
     if (digits.length < 10) { alert('Customer ka sahi 10 digit phone number likho.'); document.getElementById('billPhone').focus(); return null; }
     if (!billItems.length) { alert('Kam se kam ek product add karo.'); document.getElementById('billProdSearch').focus(); return null; }
+    var anySent = false;
     for (var i = 0; i < billItems.length; i++) {
-      if (!(Number(billItems[i].qty) >= 1)) { alert('"' + billItems[i].name + '" ki Qty kam se kam 1 honi chahiye.'); return null; }
-      if (!(Number(billItems[i].rate) > 0)) { alert('"' + billItems[i].name + '" ka Rate likho.'); return null; }
+      var it = billItems[i], q = Number(it.qty) || 0, pd = Number(it.pend) || 0;
+      if (q < 0 || pd < 0) { alert('"' + it.name + '": Qty / Pending negative nahi ho sakta.'); return null; }
+      if (q + pd < 1) { alert('"' + it.name + '": Qty ya Pending me se kuch to likho, nahi chahiye to ✕ se hata do.'); return null; }
+      if (q > 0) { anySent = true; if (!(Number(it.rate) > 0)) { alert('"' + it.name + '" ka Rate likho.'); return null; } }
     }
-    var items = billItems.map(function(it){ return { name: it.name, qty: Number(it.qty), rate: r2(Number(it.rate)) }; });
+    if (!anySent) { alert('Kam se kam ek item ki Qty (abhi bhejna wali) 1 ya zyada honi chahiye.'); return null; }
+    var items = billItems.map(function(it){
+      return { name: it.name, qty: Number(it.qty) || 0, pend: Number(it.pend) || 0, rate: r2(Number(it.rate) || 0) };
+    });
     var total = r2(items.reduce(function(s, it){ return s + it.qty * it.rate; }, 0));
     return { name: name, phone: phone, date: date, total: total, items: items };
   }
 
-  var editingId = null;
+  var editingId = null;   // history se edit chal raha hai
+  var followOf = null;    // kis bill ka pending bhej rahe hain
 
-  function setEditMode(b){
-    editingId = b ? b.id : null;
+  function openPending(b){
+    return !b.pendingClosedBy && (b.items || []).some(function(it){ return (Number(it.pend) || 0) > 0; });
+  }
+
+  function setMode(kind, b){
+    editingId = kind === 'edit' ? b.id : null;
+    followOf = kind === 'pending' ? b.id : null;
     var banner = document.getElementById('editBanner');
-    banner.style.display = b ? 'flex' : 'none';
-    document.getElementById('billNextP').style.display = b ? 'none' : 'block';
-    if (b) document.getElementById('editNo').textContent = '#' + b.no;
-    document.getElementById('btnBillShare').textContent = b ? '📲 Update Bill & Send on WhatsApp' : '📲 Create Bill & Send on WhatsApp';
-    document.getElementById('btnBillDownload').textContent = b ? '⬇ Update & PDF Download' : '⬇ Sirf PDF Download';
+    banner.style.display = kind ? 'flex' : 'none';
+    document.getElementById('billNextP').style.display = kind === 'edit' ? 'none' : 'block';
+    if (kind === 'edit') document.getElementById('editMsg').textContent = '✏️ Invoice #' + b.no + ' edit ho raha hai';
+    if (kind === 'pending') document.getElementById('editMsg').textContent = '📦 Invoice #' + b.no + ' ka pending maal bhej rahe ho (naya bill banega)';
+    document.getElementById('btnBillShare').textContent = kind === 'edit' ? '📲 Update Bill & Send on WhatsApp' : '📲 Create Bill & Send on WhatsApp';
+    document.getElementById('btnBillDownload').textContent = kind === 'edit' ? '⬇ Update & PDF Download' : '⬇ Sirf PDF Download';
+  }
+
+  function openBillBox(){
+    var box = document.getElementById('boxBill');
+    box.open = true;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function startEditBill(b){
-    setEditMode(b);
+    setMode('edit', b);
     document.getElementById('billName').value = b.name || '';
     document.getElementById('billPhone').value = b.phone || '';
     document.getElementById('billDate').value = b.date || todayStr();
     billItems = (b.items || []).map(function(it){
       var p = state.products.find(function(x){ return x.name === it.name; });
-      return { pid: p ? p.id : null, name: it.name, qty: it.qty, rate: it.rate };
+      return { pid: p ? p.id : null, name: it.name, qty: it.qty, pend: Number(it.pend) || 0, rate: it.rate };
     });
     renderBillItems();
-    var box = document.getElementById('boxBill');
-    box.open = true;
-    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    openBillBox();
     if (!billItems.length) alert('Ye purana bill hai jisme items save nahi the. Product add karke dobara items bharo.');
+  }
+
+  function startPendingBill(b){
+    var pend = (b.items || []).filter(function(it){ return (Number(it.pend) || 0) > 0; });
+    if (!pend.length) return;
+    setMode('pending', b);
+    document.getElementById('billName').value = b.name || '';
+    document.getElementById('billPhone').value = b.phone || '';
+    document.getElementById('billDate').value = todayStr();
+    billItems = pend.map(function(it){
+      var p = state.products.find(function(x){ return x.name === it.name; });
+      return { pid: p ? p.id : null, name: it.name, qty: Number(it.pend), pend: 0, rate: it.rate || (p ? lastSellPrice(p) : 0) };
+    });
+    renderBillItems();
+    openBillBox();
   }
 
   function resetBillForm(){
@@ -1068,7 +1137,7 @@
     document.getElementById('billPhone').value = '';
     document.getElementById('billDate').value = todayStr();
     billItems = [];
-    setEditMode(null);
+    setMode(null);
     renderBillItems();
   }
 
@@ -1084,6 +1153,10 @@
       b = { id: uid(), no: state.nextInvoice, name: f.name, phone: f.phone, date: f.date, total: f.total, items: f.items };
       state.bills.unshift(b);
       state.nextInvoice = b.no + 1;
+      if (followOf) {
+        var orig = state.bills.find(function(x){ return x.id === followOf; });
+        if (orig) { orig.pendingClosedBy = b.no; b.followOfNo = orig.no; }
+      }
     }
     saveState();
     if (action === 'share') sharePdf(b);
@@ -1101,12 +1174,14 @@
     var dq = q.replace(/\D/g, '');
     var list = state.bills.filter(function(b){
       if (!q) return true;
+      if (q === 'pending') return openPending(b);
       return String(b.no).indexOf(q) !== -1 ||
         String(b.name).toLowerCase().indexOf(q) !== -1 ||
         (dq && String(b.phone).replace(/\D/g, '').indexOf(dq) !== -1);
     });
     var sum = list.reduce(function(s, b){ return s + (Number(b.total) || 0); }, 0);
-    document.getElementById('histSum').textContent = list.length + ' bills · Total ' + fmtMoney(sum);
+    var pcount = list.filter(openPending).length;
+    document.getElementById('histSum').textContent = list.length + ' bills · Total ' + fmtMoney(sum) + (pcount ? ' · ⏳ ' + pcount + ' pending' : '');
     var el = document.getElementById('histList');
     if (!list.length) {
       el.innerHTML = '<div style="color:var(--ink-soft);font-size:0.82rem;padding:6px 0;">' + (state.bills.length ? 'Koi bill nahi mila.' : 'Abhi koi bill nahi bana.') + '</div>';
@@ -1114,12 +1189,19 @@
     }
     var shown = list.slice(0, 60);
     el.innerHTML = shown.map(function(b){
+      var pendLine = '';
+      var pitems = (b.items || []).filter(function(it){ return (Number(it.pend) || 0) > 0; });
+      if (pitems.length) {
+        if (b.pendingClosedBy) pendLine = '<div class="rb-meta">✔ Pending Invoice #' + b.pendingClosedBy + ' me bheja</div>';
+        else pendLine = '<div class="rb-pend">⏳ Pending: ' + pitems.map(function(it){ return escapeHtml(it.name) + ' x' + it.pend; }).join(', ') + '</div>';
+      }
       return '<div class="recent-bill"><div class="rb-info"><div class="rb-name">#' + b.no + ' · ' + escapeHtml(b.name) + '</div>' +
         '<div class="rb-meta">' + fmtDate(b.date) + ' · ' + fmtMoney(b.total) + '</div>' +
-        '<div class="rb-meta">' + escapeHtml(b.phone) + '</div></div>' +
+        '<div class="rb-meta">' + escapeHtml(b.phone) + '</div>' + pendLine + '</div>' +
         '<div class="rb-btns"><button data-bid="' + b.id + '" data-act="share" title="WhatsApp pe bhejo">📲</button>' +
         '<button class="rb-dl" data-bid="' + b.id + '" data-act="dl" title="PDF download">⬇</button>' +
         '<button class="rb-edit" data-bid="' + b.id + '" data-act="edit" title="Bill edit karo">✏️</button>' +
+        (openPending(b) ? '<button class="rb-pendbtn" data-bid="' + b.id + '" data-act="pend" title="Pending maal ka bill banao">📦</button>' : '') +
         '<button class="rb-del" data-bid="' + b.id + '" data-act="del" title="Bill delete">🗑</button></div></div>';
     }).join('') + (list.length > shown.length ? '<div class="hist-sum">Pehle 60 dikh rahe hain, search se filter karo.</div>' : '');
     Array.prototype.forEach.call(el.querySelectorAll('button'), function(btn){
@@ -1130,10 +1212,11 @@
         if (act === 'share') sharePdf(b);
         else if (act === 'dl') { if (pdfLibReady()) downloadBlob(buildInvoicePdf(b).output('blob'), pdfFileName(b)); }
         else if (act === 'edit') startEditBill(b);
+        else if (act === 'pend') startPendingBill(b);
         else if (act === 'del') {
           if (!sure('Invoice #' + b.no + ' (' + b.name + ', ' + fmtMoney(b.total) + ') history se delete karna hai? Invoice number dobara use nahi hoga.')) return;
           state.bills = state.bills.filter(function(x){ return x.id !== b.id; });
-          if (editingId === b.id) resetBillForm();
+          if (editingId === b.id || followOf === b.id) resetBillForm();
           saveState();
           renderBill();
         }
